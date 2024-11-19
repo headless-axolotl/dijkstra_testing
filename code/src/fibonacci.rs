@@ -2,7 +2,7 @@ use crate::Entry;
 
 #[derive(Debug)]
 pub struct Heap<K, T> {
-    keys: Vec<K>,
+    pub keys: Vec<K>,
     aux: Vec<T>,
 
     left_neighbour: Vec<usize>,
@@ -13,7 +13,7 @@ pub struct Heap<K, T> {
     is_marked: Vec<bool>,
 
     degree_remapping: Vec<usize>,
-    empty_indeces: Vec<usize>,
+    pub empty_indeces: Vec<usize>,
 
     len: usize,
     min_root: usize,
@@ -21,10 +21,10 @@ pub struct Heap<K, T> {
 
 impl<K, T> Heap<K, T>
 where
-    K: Clone + Copy + PartialEq + Eq + PartialOrd + Ord,
+    K: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + std::fmt::Display,
     T: Clone + Copy,
 {
-    pub fn new(capacity: usize) -> Self {
+    pub fn with_capacity(capacity: usize) -> Self {
         let logn = (usize::BITS - capacity.leading_zeros()) as usize;
         Self {
             keys: Vec::with_capacity(capacity),
@@ -109,19 +109,35 @@ where
     }
 
     fn join(&mut self, first: usize, second: usize) -> usize {
-        let (child, parent) = if self.keys[first] >= self.keys[second] {
+        // println!("HERE");
+        // self.print();
+
+        let (mut child, mut parent) = if self.keys[first] > self.keys[second] {
             (first, second)
         } else {
             (second, first)
         };
 
+        if child == self.min_root {
+            self.min_root = parent; // std::mem::swap(&mut child, &mut parent);
+        }
+
         self.attach(child, parent);
+        
+        // self.print();
         parent
     }
 
     #[inline]
     fn klen(&self) -> usize {
         self.keys.len()
+    }
+
+    pub fn insert_key(&mut self, key: K) -> usize
+    where
+        T: Default,
+    {
+        self.insert(key, T::default())
     }
 
     pub fn insert(&mut self, key: K, aux: T) -> usize {
@@ -168,15 +184,16 @@ where
             self.aux[self.min_root],
         ));
 
-        self.append(self.child[self.min_root], self.min_root);
+        if self.child[self.min_root] != self.min_root {
+            self.append(self.child[self.min_root], self.min_root);
+        }
 
         self.child[self.min_root] = self.min_root;
-
         let previous_min_root = self.min_root;
+
         self.min_root = self.right_neighbour[self.min_root];
 
         self.detach(previous_min_root);
-
         self.empty_indeces.push(previous_min_root);
 
         self.consolidate();
@@ -191,7 +208,7 @@ where
             return;
         }
 
-        let logn = (usize::BITS - self.len.leading_zeros()) as usize;
+        let logn = (usize::BITS - self.len.leading_zeros()) as usize * 2;
         self.degree_remapping.resize(logn, self.klen());
         for i in 0..logn {
             self.degree_remapping[i] = self.klen();
@@ -220,6 +237,7 @@ where
         }
 
         current_root = self.min_root;
+
         for _ in 0..root_count {
             next_root = self.right_neighbour[current_root];
             loop {
@@ -235,6 +253,7 @@ where
                 self.degree_remapping[deg] = self.klen();
                 current_root = self.join(current_root, other);
             }
+
             current_root = next_root;
         }
     }
@@ -244,31 +263,40 @@ where
         if value < self.keys[self.parent[node]] {
             self.cut_out(node);
         }
+        if value < self.keys[self.min_root] {
+            self.min_root = node;
+        }
     }
 
     fn cut_out(&mut self, node: usize) {
         let previous_parent = self.parent[node];
+        
+        if previous_parent == node {
+            self.is_marked[node] = false;
+            return;
+        }
 
         self.detach(node);
         self.append(node, self.min_root);
         self.is_marked[node] = false;
 
-        if self.keys[node] < self.keys[self.min_root] {
-            self.min_root = node;
-        }
-
         if self.is_marked[previous_parent] {
             self.cut_out(previous_parent);
-        } else {
+        } else if self.parent[previous_parent] != previous_parent {
             self.is_marked[previous_parent] = true;
         }
     }
 
-    pub fn print(&self) 
-    where 
-        K: std::fmt::Display
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
+    pub fn print(&self)
+    where
+        K: std::fmt::Display,
     {
         self.print_node(self.min_root, 0);
+        println!();
     }
 
     fn print_node(&self, index: usize, depth: usize)
@@ -282,7 +310,14 @@ where
 
         loop {
             print!("{}", offset);
-            println!("|{}-{}", current_node, self.keys[current_node]);
+            println!(
+                "|[{}]-{}<{}>{};p-{}",
+                current_node,
+                self.keys[current_node],
+                self.left_neighbour[current_node],
+                self.right_neighbour[current_node],
+                self.parent[current_node],
+            );
             if self.child[current_node] != current_node {
                 self.print_node(self.child[current_node], depth + 1);
             }
@@ -296,5 +331,3 @@ where
         }
     }
 }
-
-

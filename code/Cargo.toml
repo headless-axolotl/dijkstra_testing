@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8.5"
-serde = { version = "1.0", features = ["derive"] }
-savefile = "0.18"
-savefile-derive = "0.18"
+# rand_pcg = "0.3"
+# serde = { version = "1.0", features = ["derive"] }
 

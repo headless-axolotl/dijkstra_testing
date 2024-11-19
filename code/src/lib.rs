@@ -3,6 +3,7 @@
 pub mod fibonacci;
 pub mod binary;
 
+pub mod dijkstra;
 pub mod graph;
 
 #[derive(Debug)]
@@ -16,4 +17,3 @@ impl<K, T> Entry<K, T> {
         Self { key, aux }
     }
 }
-

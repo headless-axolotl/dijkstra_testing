@@ -1,63 +1,83 @@
-use rand::{distributions::Uniform, prelude::*};
-use savefile::prelude::*;
-use savefile_derive::Savefile;
+use std::{collections::VecDeque, fmt::Display};
 
-#[derive(Savefile)]
+use rand::{distributions::Uniform, prelude::*};
+
 #[derive(Debug)]
 pub struct Graph {
     pub nodes: Vec<Vec<Dir>>,
 }
 
 impl Graph {
-    fn generate(count: usize, density: f32) -> Option<Self> {
-        if !(0. ..1.).contains(&density) {
+    pub fn generate(count: usize, density: f32) -> Option<Self> {
+        if !(0. ..=1.).contains(&density) {
             return None;
         }
 
         let edge_rng = Uniform::new(0f32, 1f32);
-        let position_rng = Uniform::new(0i32, 1_000_000i32);
+        let weight_rng = Uniform::new(0u32, 100_000u32);
         let mut rng = rand::thread_rng();
-
-        let positions = (0..count)
-            .map(|_| (position_rng.sample(&mut rng), position_rng.sample(&mut rng)))
-            .collect::<Vec<_>>();
-
-        let mut should_create_edge = move || edge_rng.sample(&mut rng) < density;
-        fn square_magnitude(a: (i32, i32), b: (i32, i32)) -> usize {
-            ((a.0 - b.0) * (a.0 - b.0) + (a.1 - b.1) * (a.1 - b.1)) as usize
-        }
 
         let mut nodes = vec![vec![]; count];
         let mut weight = 0;
+        let mut should_create_edge;
 
         for from in 0..count {
             for to in from + 1..count {
                 if from == to {
                     continue;
                 }
-                if !should_create_edge() {
+
+                should_create_edge = edge_rng.sample(&mut rng) < density;
+                if !should_create_edge {
                     continue;
                 }
 
-                weight = square_magnitude(positions[from], positions[to]);
-                nodes[from].push(Dir::new(to, weight));
-                nodes[to].push(Dir::new(from, weight));
+                weight = weight_rng.sample(&mut rng);
+                nodes[from].push(Dir::new(to as u32, weight));
+                nodes[to].push(Dir::new(from as u32, weight));
             }
         }
 
         Some(Graph { nodes })
     }
+
+    pub fn is_connected(&self) -> bool {
+        let mut queue: VecDeque<usize> = VecDeque::new();
+        let mut is_visited = vec![false; self.nodes.len()];
+        let mut visited: usize = 0;
+
+        queue.push_back(0);
+        is_visited[0] = true;
+
+        while let Some(current) = queue.pop_front() {
+            visited += 1;
+            for neighbour in &self.nodes[current] {
+                if is_visited[neighbour.node as usize] {
+                    continue;
+                }
+
+                is_visited[neighbour.node as usize] = true;
+                queue.push_back(neighbour.node as usize);
+            }
+        }
+        visited == self.nodes.len()
+    }
 }
 
-#[derive(Clone, Copy, Savefile)]
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Dir {
-    node: usize,
-    weight: usize,
+    pub node: u32,
+    pub weight: u32,
 }
 
 impl Dir {
-    pub fn new(node: usize, weight: usize) -> Self {
+    pub fn new(node: u32, weight: u32) -> Self {
         Self { node, weight }
+    }
+}
+
+impl Display for Dir {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[n: {}; w: {}]", self.node, self.weight)
     }
 }
