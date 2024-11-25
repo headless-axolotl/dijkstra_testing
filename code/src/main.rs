@@ -6,7 +6,7 @@ const K: u32 = 10;
 const G: usize = 10_000;
 
 fn main() {
-    let graph = code::graph::Graph::generate(G, 0.5).unwrap();
+    let graph = code::graph::Graph::generate(G, 0.5);
     println!("done generating");
 
     // let standard = dijkstra::dijkstra_standard(&graph);

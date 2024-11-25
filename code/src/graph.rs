@@ -8,10 +8,8 @@ pub struct Graph {
 }
 
 impl Graph {
-    pub fn generate(count: usize, density: f32) -> Option<Self> {
-        if !(0. ..=1.).contains(&density) {
-            return None;
-        }
+    pub fn generate(count: usize, mut density: f32) -> Self {
+        density = density.clamp(0., 1.);
 
         let edge_rng = Uniform::new(0f32, 1f32);
         let weight_rng = Uniform::new(0u32, 100_000u32);
@@ -38,7 +36,21 @@ impl Graph {
             }
         }
 
-        Some(Graph { nodes })
+        Graph { nodes }
+    }
+
+    pub fn generate_connected(count: usize, density: f32) -> Graph {
+        const MAX_ITERATIONS: usize = 32;
+        
+        let mut result;
+        for _ in 0..MAX_ITERATIONS {
+            result = Self::generate(count, density);
+            if result.is_connected() {
+                return result;
+            }
+        }
+
+        panic!("Could not generate a connected graph in {} iterations.", MAX_ITERATIONS);
     }
 
     pub fn is_connected(&self) -> bool {

@@ -55,11 +55,13 @@ pub fn dijkstra_standard(graph: &Graph) -> Result {
     Result { distance, parent }
 }
 
+const PADDING: usize = 32;
+
 pub fn dijkstra_binary(graph: &Graph) -> Result {
     let n = graph.nodes.len();
     let mut distance = vec![u32::MAX; n];
     let mut parent = vec![u32::MAX; n];
-    let mut heap = BHeap::with_capacity(n + 1);
+    let mut heap = BHeap::with_capacity(n + PADDING);
 
     distance[0] = 0;
     parent[0] = 0;
@@ -94,7 +96,7 @@ pub fn dijkstra_fibonacci(graph: &Graph) -> Result {
     let n = graph.nodes.len();
     let mut distance = vec![u32::MAX; n];
     let mut parent = vec![u32::MAX; n];
-    let mut heap = FHeap::with_capacity(n);
+    let mut heap = FHeap::with_capacity(n + PADDING);
 
     for i in 0..n {
         heap.insert(u32::MAX, i);

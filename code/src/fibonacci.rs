@@ -109,9 +109,6 @@ where
     }
 
     fn join(&mut self, first: usize, second: usize) -> usize {
-        // println!("HERE");
-        // self.print();
-
         let (mut child, mut parent) = if self.keys[first] > self.keys[second] {
             (first, second)
         } else {
@@ -119,12 +116,11 @@ where
         };
 
         if child == self.min_root {
-            self.min_root = parent; // std::mem::swap(&mut child, &mut parent);
+            self.min_root = parent;
         }
 
         self.attach(child, parent);
         
-        // self.print();
         parent
     }
 
@@ -271,14 +267,14 @@ where
     fn cut_out(&mut self, node: usize) {
         let previous_parent = self.parent[node];
         
+        self.is_marked[node] = false;
+        
         if previous_parent == node {
-            self.is_marked[node] = false;
             return;
         }
 
         self.detach(node);
         self.append(node, self.min_root);
-        self.is_marked[node] = false;
 
         if self.is_marked[previous_parent] {
             self.cut_out(previous_parent);
