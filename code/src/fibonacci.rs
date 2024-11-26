@@ -2,7 +2,7 @@ use crate::Entry;
 
 #[derive(Debug)]
 pub struct Heap<K, T> {
-    pub keys: Vec<K>,
+    keys: Vec<K>,
     aux: Vec<T>,
 
     left_neighbour: Vec<usize>,
@@ -13,7 +13,7 @@ pub struct Heap<K, T> {
     is_marked: Vec<bool>,
 
     degree_remapping: Vec<usize>,
-    pub empty_indeces: Vec<usize>,
+    empty_indeces: Vec<usize>,
 
     len: usize,
     min_root: usize,
@@ -204,7 +204,7 @@ where
             return;
         }
 
-        let logn = (usize::BITS - self.len.leading_zeros()) as usize * 2;
+        let logn = (usize::BITS - self.len.leading_zeros()) as usize + 32;
         self.degree_remapping.resize(logn, self.klen());
         for i in 0..logn {
             self.degree_remapping[i] = self.klen();

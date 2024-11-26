@@ -11,12 +11,12 @@ use criterion::{
 pub fn with_density(c: &mut Criterion, density: f32) {
     let mut group = c.benchmark_group(format!("Dijkstra {}% Density", density * 100.0));
 
-    group.sample_size(100);
-    group.warm_up_time(std::time::Duration::new(20, 0));
-    group.measurement_time(std::time::Duration::new(30, 0));
+    group.sample_size(50);
+    group.warm_up_time(std::time::Duration::new(10, 0));
+    group.measurement_time(std::time::Duration::new(20, 0));
 
     const UPPER: usize = 10_000;
-    let step = UPPER / 20;
+    let step = UPPER / 5;
 
     for i in (step..=UPPER).step_by(step) {
         group.bench_with_input(BenchmarkId::new("Baseline", i), &i, |b, _i| {
@@ -31,6 +31,14 @@ pub fn with_density(c: &mut Criterion, density: f32) {
             b.iter_batched_ref(
                 || Graph::generate_connected(i, density),
                 |g| black_box(dijkstra::dijkstra_fibonacci(black_box(g))),
+                BatchSize::SmallInput,
+            )
+        });
+
+        group.bench_with_input(BenchmarkId::new("Fibonacci No Preload", i), &i, |b, _i| {
+            b.iter_batched_ref(
+                || Graph::generate_connected(i, density),
+                |g| black_box(dijkstra::dijkstra_fibonacci_without_preload(black_box(g))),
                 BatchSize::SmallInput,
             )
         });
